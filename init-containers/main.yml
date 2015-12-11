@@ -1,0 +1,27 @@
+---
+- hosts: localhost
+  tasks:
+    - include: setup-lxc-ubuntu.yml
+      vars:
+        lxc:
+          name: trusty
+          store: zfs
+          repo: http://example.net/Linux/ubuntu/
+          path: /zroot/lxc/trusty/rootfs
+          release: trusty
+          user: kuroda
+          pass: Pa55w0l~d
+          authorized_keys: ~/.ssh/id_rsa.pub
+          host: trusty.l.syngram.co.jp
+    - include: setup-lxc-ubuntu.yml
+      vars:
+        lxc:
+          name: wily
+          store: zfs
+          repo: http://example.net/Linux/ubuntu/
+          path: /zroot/lxc/wily/rootfs
+          release: wily
+          user: kuroda
+          pass: Pa55w0l~d
+          authorized_keys: ~/.ssh/id_rsa.pub
+          host: wily.l.syngram.co.jp

@@ -1,0 +1,44 @@
+---
+- name: create container
+  become: true
+  command: lxc-create -B {{ lxc.store }} -t ubuntu -n {{ lxc.name }} -- -r {{ lxc.release }} -u {{ lxc.user }}
+  args:
+    creates: "{{ lxc.path }}"
+- name: start container
+  become: true
+  command: lxc-start -dn {{ lxc.name }}
+- name: update password
+  become: true
+  command: lxc-attach -n {{ lxc.name }} -- usermod -p '{{ lxc.pass }}' {{ lxc.user }}
+- name: mkdir .ssh
+  become: true
+  file:
+    path: "{{ lxc.path }}/home/{{ lxc.user }}/.ssh"
+    state: directory
+    owner: "{{ lxc.user }}"
+    group: "{{ lxc.user }}"
+- name: copy authorized_keys
+  become: true
+  copy:
+    src: "{{ lxc.authorized_keys }}"
+    dest: "{{ lxc.path }}/home/{{ lxc.user }}/.ssh/authorized_keys"
+    owner: "{{ lxc.user }}"
+    group: "{{ lxc.user }}"
+- name: update source.list
+  become: true
+  template:
+    src: sources.list.j2
+    dest: "{{ lxc.path }}/etc/apt/sources.list"
+    backup: yes
+- wait_for:
+    host: "{{ lxc.host }}"
+    port: 22
+    timeout: 5
+- name: apt-get update
+  become: true
+  command: lxc-attach -n {{ lxc.name }} -- apt-get update
+  register: result
+  failed_when: "result.stderr != ''"
+- name: apt-get install python
+  become: true
+  command: lxc-attach -n {{ lxc.name }} -- apt-get install -y python

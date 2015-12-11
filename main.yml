@@ -1,0 +1,44 @@
+---
+- hosts: target
+  tasks:
+    - name: apt-get update
+      apt:
+        update_cache: yes
+        upgrade: dist
+        cache_valid_time: 3600
+      become: true
+    - name: build-dep ruby-full
+      apt:
+        name: ruby-full
+        state: build-dep
+      become: true
+    - name: install libXX-dev
+      apt:
+        name: "{{ item }}"
+        state: installed
+      with_items:
+        - zlib1g
+        - libreadline-dev
+        - libssl-dev
+      become: true
+    - name: mkdir for unarchive
+      file:
+        path: /tmp/ansible-build-ruby
+        state: directory
+    - unarchive:
+        src: ruby-2.2.3.tar.gz
+        dest: /tmp/ansible-build-ruby/
+    - command: ./configure --prefix=/opt/ruby/2.2.3
+      args:
+        chdir: /tmp/ansible-build-ruby/ruby-2.2.3
+    - command: make
+      args:
+        chdir: /tmp/ansible-build-ruby/ruby-2.2.3
+    - command: make install
+      become: true
+      args:
+        chdir: /tmp/ansible-build-ruby/ruby-2.2.3
+    - name: cleanup build directory
+      file:
+        path: /tmp/ansible-build-ruby
+        state: absent
